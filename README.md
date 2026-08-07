@@ -2,6 +2,8 @@
 
 A professional internal support ticket system built with Flask and Lakebase Postgres.
 
+Running application url https://homework1-app-new-3497162221015794.aws.databricksapps.com/
+
 The github url is https://github.com/mhdraja99/Zach-Databricks-AI-homework1/tree/main
 
 ## Features
