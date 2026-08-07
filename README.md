@@ -2,6 +2,8 @@
 
 A professional internal support ticket system built with Flask and Lakebase Postgres.
 
+The running application URL is https://homework1-app-new-3497162221015794.aws.databricksapps.com/
+
 ## Features
 
 - 🎫 Create and manage support tickets
