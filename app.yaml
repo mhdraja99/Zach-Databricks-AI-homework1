@@ -1,0 +1,15 @@
+# Databricks App Configuration
+# This file defines how your app runs in Databricks Apps
+
+command:
+  - python
+  - app.py
+
+env:
+  # Flask configuration
+  - name: FLASK_RUN_HOST
+    value: "0.0.0.0"
+  - name: FLASK_RUN_PORT
+    value: "8000"
+  - name: FLASK_ENV
+    value: "production"

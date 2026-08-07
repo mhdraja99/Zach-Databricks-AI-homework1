@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Ticket System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .ticket-list {
+            display: grid;
+            gap: 15px;
+        }
+        .ticket-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .ticket-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        .ticket-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .ticket-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-open { background: #ffc107; color: #000; }
+        .status-in_progress { background: #17a2b8; color: white; }
+        .status-resolved { background: #28a745; color: white; }
+        .status-closed { background: #6c757d; color: white; }
+        .ticket-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+        .message-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .message-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .message-author {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+        .message-text {
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎫 Support Ticket System</h1>
+        
+        <!-- Create Ticket Form -->
+        <div class="card">
+            <h2>Create New Ticket</h2>
+            <form id="ticketForm">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <button type="submit">Create Ticket</button>
+            </form>
+        </div>
+
+        <!-- Ticket List -->
+        <div class="card">
+            <h2>All Tickets</h2>
+            <div id="ticketList" class="ticket-list"></div>
+        </div>
+    </div>
+
+    <!-- Ticket Detail Modal -->
+    <div id="ticketModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="ticketDetail"></div>
+            
+            <!-- Status Update Section -->
+            <div class="card" style="margin: 20px 0; background: #f8f9fa;">
+                <h3>Update Status</h3>
+                <form id="statusForm" style="display: flex; gap: 10px; align-items: center;">
+                    <select id="modal_status" style="flex: 1;">
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <button type="submit">Update Status</button>
+                </form>
+            </div>
+            
+            <h3>Messages</h3>
+            <div id="messageList" class="message-list"></div>
+            <h3>Add Message</h3>
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="message_text">Message</label>
+                    <textarea id="message_text" required></textarea>
+                </div>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentTicketId = null;
+
+        // Load tickets on page load
+        window.addEventListener('DOMContentLoaded', loadTickets);
+
+        // Create ticket form submission
+        document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('title').value,
+                status: document.getElementById('status').value
+            };
+
+            try {
+                const response = await fetch('/tickets', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    document.getElementById('ticketForm').reset();
+                    loadTickets();
+                }
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+            }
+        });
+
+        // Status update form submission
+        document.getElementById('statusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newStatus = document.getElementById('modal_status').value;
+
+            try {
+                const response = await fetch(`/tickets/${currentTicketId}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (response.ok) {
+                    // Reload tickets list and reopen the modal
+                    await loadTickets();
+                    openTicket(currentTicketId);
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        });
+
+        // Message form submission
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                message_text: document.getElementById('message_text').value
+            };
+
+            try {
+                const response = await fetch(`/tickets/${currentTicketId}/messages`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    document.getElementById('messageForm').reset();
+                    loadMessages(currentTicketId);
+                    // Update the ticket list to show the new message count
+                    loadTickets();
+                }
+            } catch (error) {
+                console.error('Error adding message:', error);
+            }
+        });
+
+        async function loadTickets() {
+            try {
+                const response = await fetch('/tickets');
+                const tickets = await response.json();
+                const listEl = document.getElementById('ticketList');
+                
+                if (tickets.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state">No tickets yet. Create your first one!</div>';
+                    return;
+                }
+
+                listEl.innerHTML = tickets.map(ticket => `
+                    <div class="ticket-item" onclick="openTicket(${ticket.ticket_id})">
+                        <div class="ticket-header">
+                            <div class="ticket-title">${ticket.title}</div>
+                            <span class="ticket-status status-${ticket.status}">${ticket.status.replace('_', ' ')}</span>
+                        </div>
+                        <div class="ticket-meta">
+                            Created by ${ticket.created_by} on ${new Date(ticket.created_at).toLocaleString()}
+                            <br>Messages: ${ticket.message_count}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+            }
+        }
+
+        async function openTicket(ticketId) {
+            currentTicketId = ticketId;
+            document.getElementById('ticketModal').style.display = 'block';
+            
+            // Load ticket details to get current status
+            try {
+                const response = await fetch('/tickets');
+                const tickets = await response.json();
+                const ticket = tickets.find(t => t.ticket_id === ticketId);
+                
+                if (ticket) {
+                    // Set current status in dropdown
+                    document.getElementById('modal_status').value = ticket.status;
+                    
+                    // Update ticket detail display
+                    document.getElementById('ticketDetail').innerHTML = `
+                        <h2>${ticket.title}</h2>
+                        <div class="ticket-meta">
+                            Created by ${ticket.created_by} on ${new Date(ticket.created_at).toLocaleString()}
+                            <br>Current Status: <span class="ticket-status status-${ticket.status}">${ticket.status.replace('_', ' ')}</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading ticket details:', error);
+            }
+            
+            loadMessages(ticketId);
+        }
+
+        async function loadMessages(ticketId) {
+            try {
+                const response = await fetch(`/tickets/${ticketId}/messages`);
+                const messages = await response.json();
+                const listEl = document.getElementById('messageList');
+                
+                if (messages.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state">No messages yet. Be the first to comment!</div>';
+                    return;
+                }
+
+                listEl.innerHTML = messages.map(msg => `
+                    <div class="message-item">
+                        <div class="message-author">${msg.author}</div>
+                        <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
+                        <div class="message-text">${msg.message_text}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('ticketModal').style.display = 'none';
+            currentTicketId = null;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('ticketModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
